@@ -1,0 +1,12 @@
+{
+  "files.autoSave": "onFocusChange",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "always",
+    "source.removeUnusedImports": "always",
+    "source.sortImports": "always"
+  },
+  "files.associations": {
+    "*.css": "tailwindcss"
+  }
+}
