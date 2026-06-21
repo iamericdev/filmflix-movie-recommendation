@@ -1,14 +1,39 @@
 "use client";
 
-import { Bell, Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { authClient } from "@/lib/auth/client";
 import { motion } from "motion/react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export const Navbar = () => {
+  const router = useRouter();
+  const { data: session, isPending } = authClient.useSession();
+
+  const handleSignOut = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/");
+          router.refresh();
+        },
+      },
+    });
+  };
+
   return (
-    <header className="absolute top-0 inset-x-0 z-30 pt-6 px-10">
+    <header className="absolute top-0 inset-x-0 z-30 pt-6 px-4 md:px-10">
       <div className="flex items-center justify-between">
-        <nav className="flex items-center gap-7 text-sm text-white/80">
-          {["New", "Movies", "Series", "Cartoons"].map((n) => (
+        <nav className="hidden sm:flex items-center gap-7 text-sm text-white/80">
+          <Link href="/" className="hover:text-white transition-colors">
+            Home
+          </Link>
+          {session && (
+            <Link href="/watchlist" className="hover:text-white transition-colors">
+              My Watchlist
+            </Link>
+          )}
+          {["Movies", "Series"].map((n) => (
             <motion.a
               key={n}
               whileHover={{ y: -2, color: "#fff" }}
@@ -16,29 +41,35 @@ export const Navbar = () => {
               href="#"
             >
               {n}
-              {n === "Cartoons" && <sup className="text-[10px] ml-0.5">2</sup>}
             </motion.a>
           ))}
         </nav>
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute left-1/2 -translate-x-1/2 font-display tracking-[0.3em] text-lg"
+          className="absolute left-1/2 -translate-x-1/2 font-display tracking-[0.3em] text-base sm:text-lg cursor-pointer"
         >
-          AGENCY
+          <Link href="/" className="hover:text-white">
+            FILMFLIX
+          </Link>
         </motion.div>
-        <div className="flex items-center gap-5">
-          <motion.button whileHover={{ rotate: 15 }} className="text-white/70">
-            <Bell className="w-5 h-5" />
-          </motion.button>
-          <span className="text-sm text-white/90">João M</span>
-          <motion.div
-            whileHover={{ rotate: 90 }}
-            transition={{ duration: 0.4 }}
-            className="w-8 h-8 rounded-full border-2 border-primary flex items-center justify-center"
-          >
-            <Settings className="w-4 h-4 text-primary" />
-          </motion.div>
+        <div className="flex items-center gap-3 sm:gap-5">
+          {isPending ? (
+            <div className="w-8 h-8 rounded-full border border-white/20 border-t-white animate-spin" />
+          ) : session ? (
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-white/70 hidden md:inline">
+                Hi, {session.user.name}
+              </span>
+              <Button onClick={handleSignOut} variant="outline" size="sm">
+                Sign Out
+              </Button>
+            </div>
+          ) : (
+            <Button asChild size="sm">
+              <Link href={"/login"}>Sign In</Link>
+            </Button>
+          )}
         </div>
       </div>
     </header>

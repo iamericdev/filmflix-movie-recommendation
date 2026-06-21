@@ -3,7 +3,7 @@ import { motion } from "motion/react";
 import { row1 } from "../../server/data";
 
 export const Row = ({ items }: { items: typeof row1 }) => (
-  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 px-12">
+  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 px-4 md:px-12">
     {items.map((m, i) => (
       <PosterCard key={m.t} m={m} i={i} />
     ))}

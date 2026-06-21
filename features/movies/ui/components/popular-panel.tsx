@@ -11,12 +11,12 @@ export const PopularPanel = () => {
       className="-mt-20"
     >
       <h3 className="font-semibold text-sm mb-3 pl-2">Popular Movies</h3>
-      <div className="bg-black/55 backdrop-blur-md rounded-2xl p-4 flex items-end gap-3 relative border border-white/5">
+      <div className="bg-black/55 backdrop-blur-md rounded-2xl p-4 flex items-end gap-3 relative border border-white/5 overflow-x-auto scrollbar-hide">
         {popular.map((p, i) => (
           <motion.div
             key={i}
             whileHover={{ y: -6, scale: 1.03 }}
-            className={`relative flex-1 aspect-2/3 rounded-lg overflow-hidden cursor-pointer ${
+            className={`relative shrink-0 w-20 sm:w-auto sm:flex-1 aspect-2/3 rounded-lg overflow-hidden cursor-pointer ${
               p.active
                 ? "ring-2 ring-accent-red shadow-[0_0_20px_rgba(255,60,60,0.4)]"
                 : ""

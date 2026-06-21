@@ -8,7 +8,7 @@ import { PopularPanel } from "./popular-panel";
 export const HeroSection = () => {
   return (
     <>
-      <section className="relative h-[680px] overflow-hidden rounded-b-[20px]">
+      <section className="relative h-[500px] sm:h-[600px] md:h-[680px] overflow-hidden rounded-b-[20px]">
         <motion.img
           initial={{ scale: 1.08 }}
           animate={{ scale: 1 }}
@@ -20,12 +20,12 @@ export const HeroSection = () => {
         <div className="absolute inset-0 bg-linear-to-r from-background via-background/70 to-transparent" />
         <div className="absolute inset-0 bg-linear-to-t from-background via-transparent to-background/60" />
 
-        <div className="absolute top-20 left-24 right-1/2 z-20">
+        <div className="absolute top-16 sm:top-20 left-4 md:left-24 right-4 md:right-1/2 z-20">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="flex items-center gap-2 bg-white/5 backdrop-blur rounded-full px-4 py-2 max-w-md mb-16"
+            className="flex items-center gap-2 bg-white/5 backdrop-blur rounded-full px-4 py-2 max-w-full md:max-w-md mb-8 md:mb-16"
           >
             <Search className="w-4 h-4 text-white/50" />
             <input
@@ -38,7 +38,7 @@ export const HeroSection = () => {
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4, duration: 0.7 }}
-            className="font-display text-6xl tracking-wider leading-none"
+            className="font-display text-4xl md:text-6xl tracking-wider leading-none"
           >
             STAR WARS
           </motion.h1>
@@ -46,7 +46,7 @@ export const HeroSection = () => {
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.55, duration: 0.7 }}
-            className="font-display text-3xl tracking-wider mt-2 text-white/95"
+            className="font-display text-xl md:text-3xl tracking-wider mt-2 text-white/95"
           >
             THE RISE OF SKYWALKER
           </motion.h2>
@@ -54,7 +54,7 @@ export const HeroSection = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7 }}
-            className="text-sm text-white/70 mt-4 max-w-md leading-relaxed"
+            className="text-sm text-white/70 mt-4 max-w-full md:max-w-md leading-relaxed"
           >
             The surviving members of the resistance face the First Order once
             again, and the legendary conflict between the Jedi and the Sith

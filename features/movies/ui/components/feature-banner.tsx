@@ -8,7 +8,7 @@ export const FeatureBanner = () => {
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className="relative mx-12 my-10 rounded-2xl overflow-hidden h-[340px]"
+      className="relative mx-4 md:mx-12 my-6 md:my-10 rounded-2xl overflow-hidden h-[280px] md:h-[340px]"
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -18,8 +18,8 @@ export const FeatureBanner = () => {
         className="absolute inset-0 w-full h-full object-cover"
       />
       <div className="absolute inset-0 bg-linear-to-r from-background via-background/60 to-transparent" />
-      <div className="relative z-10 p-10 max-w-xl h-full flex flex-col justify-between">
-        <div className="flex items-center gap-3 text-xs">
+      <div className="relative z-10 p-6 md:p-10 max-w-xl h-full flex flex-col justify-between">
+        <div className="flex items-center gap-2 md:gap-3 text-xs flex-wrap">
           <span className="bg-accent-red px-2 py-0.5 rounded font-bold">
             16
           </span>
@@ -32,13 +32,13 @@ export const FeatureBanner = () => {
           </span>
         </div>
         <div>
-          <h3 className="text-3xl font-bold mb-3">House of the Dragon</h3>
-          <p className="text-sm text-white/70 leading-relaxed mb-5">
+          <h3 className="text-xl md:text-3xl font-bold mb-2 md:mb-3">House of the Dragon</h3>
+          <p className="hidden sm:block text-sm text-white/70 leading-relaxed mb-5">
             Lorem ipsum dolor sit amet consectetur. Rutrum ultrices amet cursus
             hac viverra semper tincidunt condimentum. Est mattis bibendum
             euismod sed facilisis laoreet.
           </p>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 sm:justify-between">
             <div className="flex gap-4 text-xs text-white/60">
               <a className="hover:text-white cursor-pointer">Infomations</a>
               <a className="hover:text-white cursor-pointer">Trailer</a>

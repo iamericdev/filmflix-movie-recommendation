@@ -16,8 +16,8 @@ export const HomeView = () => {
       <HeroSection />
 
       {/* Tabs */}
-      <section className="pt-24 pb-6">
-        <div className="flex justify-center gap-10 mb-7">
+      <section className="pt-20 md:pt-24 pb-6">
+        <div className="flex justify-center gap-4 sm:gap-10 mb-7">
           {tabs.map((t) => {
             const Icon = tabIcons[t];
             const active = tab === t;
@@ -44,8 +44,8 @@ export const HomeView = () => {
           })}
         </div>
 
-        <div className="flex justify-center items-center gap-3 px-12 relative">
-          <div className="flex gap-3 overflow-x-auto scrollbar-hide max-w-3xl">
+        <div className="flex justify-center items-center gap-3 px-4 md:px-12 relative">
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide max-w-full md:max-w-3xl">
             {cats.map((c) => {
               const active = cat === c;
               return (
@@ -89,7 +89,7 @@ export const HomeView = () => {
         <Row items={row3} />
       </div>
 
-      <div className="px-12 pb-8">
+      <div className="px-4 md:px-12 pb-8">
         <motion.button
           whileHover={{
             scale: 1.01,
