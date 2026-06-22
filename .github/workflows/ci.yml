@@ -60,17 +60,19 @@ jobs:
 
     permissions:
       pull-requests: write
-      contents: read
+      contents: write   # required for peter-evans/create-pull-request to push the branch
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: true   # keep token so the action can push
 
       - name: Create or update pull request
         uses: peter-evans/create-pull-request@v7
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           base: main
           branch: ${{ github.ref_name }}
           title: "chore: promote ${{ github.ref_name }} → main (${{ github.sha }})"
