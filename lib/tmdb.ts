@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-const TMDB_API_KEY = process.env.TMDB_API_KEY;
+const getApiKey = () => process.env.TMDB_API_KEY;
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
 export interface MovieItem {
@@ -31,9 +31,10 @@ const memoryCache = new Map<string, CacheEntry<any>>();
  */
 function getUrl(path: string, params: Record<string, string | number> = {}) {
   const url = new URL(`${TMDB_BASE_URL}${path}`);
+  const apiKey = getApiKey();
 
-  if (TMDB_API_KEY && !TMDB_API_KEY.startsWith("ey")) {
-    url.searchParams.append("api_key", TMDB_API_KEY);
+  if (apiKey && !apiKey.startsWith("ey")) {
+    url.searchParams.append("api_key", apiKey);
   }
 
   Object.entries(params).forEach(([key, val]) => {
@@ -50,9 +51,10 @@ function getHeaders() {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
+  const apiKey = getApiKey();
 
-  if (TMDB_API_KEY && TMDB_API_KEY.startsWith("ey")) {
-    headers["Authorization"] = `Bearer ${TMDB_API_KEY}`;
+  if (apiKey && apiKey.startsWith("ey")) {
+    headers["Authorization"] = `Bearer ${apiKey}`;
   }
 
   return headers;
@@ -73,7 +75,8 @@ export async function fetchWithCache<T>(
     return cached.data as T;
   }
 
-  if (!TMDB_API_KEY) {
+  const apiKey = getApiKey();
+  if (!apiKey) {
     console.warn(
       "TMDB_API_KEY is not defined. Returning fallback empty/mock data.",
     );
