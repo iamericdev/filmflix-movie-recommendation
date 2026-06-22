@@ -1,13 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
 export interface MovieItem {
   id: number;
-  t: string;          // title
-  img: string;        // poster image URL
-  backdrop: string;   // backdrop image URL
-  y: number;          // release year
-  r: number | null;   // rating (out of 5 stars)
+  t: string; // title
+  img: string; // poster image URL
+  backdrop: string; // backdrop image URL
+  y: number; // release year
+  r: number | null; // rating (out of 5 stars)
   overview: string;
   genreIds: number[];
 }
@@ -31,7 +32,6 @@ const memoryCache = new Map<string, CacheEntry<any>>();
 function getUrl(path: string, params: Record<string, string | number> = {}) {
   const url = new URL(`${TMDB_BASE_URL}${path}`);
 
-  // If using short-form API Key, append it to URL
   if (TMDB_API_KEY && !TMDB_API_KEY.startsWith("ey")) {
     url.searchParams.append("api_key", TMDB_API_KEY);
   }
@@ -64,7 +64,7 @@ function getHeaders() {
 export async function fetchWithCache<T>(
   path: string,
   params: Record<string, string | number> = {},
-  ttlMs: number = 5 * 60 * 1000 // default 5 minutes
+  ttlMs: number = 5 * 60 * 1000, // default 5 minutes
 ): Promise<T> {
   const cacheKey = JSON.stringify({ path, params });
   const cached = memoryCache.get(cacheKey);
@@ -73,9 +73,10 @@ export async function fetchWithCache<T>(
     return cached.data as T;
   }
 
-  // If TMDB key is not defined, fall back gracefully to return mock structure or empty list
   if (!TMDB_API_KEY) {
-    console.warn("TMDB_API_KEY is not defined. Returning fallback empty/mock data.");
+    console.warn(
+      "TMDB_API_KEY is not defined. Returning fallback empty/mock data.",
+    );
     if (path.includes("genre")) {
       return { genres: [] } as any;
     }
@@ -85,9 +86,14 @@ export async function fetchWithCache<T>(
   const url = getUrl(path, params);
   const headers = getHeaders();
 
-  const response = await fetch(url, { headers, next: { revalidate: ttlMs / 1000 } });
+  const response = await fetch(url, {
+    headers,
+    next: { revalidate: ttlMs / 1000 },
+  });
   if (!response.ok) {
-    throw new Error(`TMDB API request failed: ${response.statusText} (${response.status})`);
+    throw new Error(
+      `TMDB API request failed: ${response.statusText} (${response.status})`,
+    );
   }
 
   const data = await response.json();
@@ -110,20 +116,22 @@ export function mapTmdbMovie(movie: any): MovieItem {
   const releaseYear = movie.release_date
     ? new Date(movie.release_date).getFullYear()
     : movie.first_air_date
-    ? new Date(movie.first_air_date).getFullYear()
-    : 0;
+      ? new Date(movie.first_air_date).getFullYear()
+      : 0;
 
   return {
     id: movie.id,
     t: movie.title || movie.name || "Untitled",
     img: movie.poster_path
       ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-      : "/images/p-johnwick.jpg", // Fallback to an existing asset
+      : "/images/p-johnwick.jpg", // dummy movie poster
     backdrop: movie.backdrop_path
       ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
-      : "/images/bg.png",
+      : "/images/bg.png", // dummy backdrop
     y: isNaN(releaseYear) ? 0 : releaseYear,
-    r: movie.vote_average ? parseFloat((movie.vote_average / 2).toFixed(1)) : null,
+    r: movie.vote_average
+      ? parseFloat((movie.vote_average / 2).toFixed(1))
+      : null,
     overview: movie.overview || "",
     genreIds: movie.genre_ids || movie.genres?.map((g: any) => g.id) || [],
   };
@@ -136,7 +144,7 @@ export async function getMovieGenres(): Promise<Genre[]> {
     const data = await fetchWithCache<{ genres: Genre[] }>(
       "/genre/movie/list",
       { language: "en-US" },
-      24 * 60 * 60 * 1000 // Cache genres for 24 hours
+      24 * 60 * 60 * 1000, // 24 hours cache
     );
     return data.genres || [];
   } catch (error) {
@@ -145,11 +153,14 @@ export async function getMovieGenres(): Promise<Genre[]> {
   }
 }
 
-export async function getTrendingMovies(page = 1, genreId?: number): Promise<{ results: MovieItem[]; totalPages: number }> {
+export async function getTrendingMovies(
+  page = 1,
+  genreId?: number,
+): Promise<{ results: MovieItem[]; totalPages: number }> {
   try {
     const data = await fetchWithCache<{ results: any[]; total_pages: number }>(
       "/trending/movie/week",
-      { page }
+      { page },
     );
 
     let movies = (data.results || []).map(mapTmdbMovie);
@@ -168,11 +179,13 @@ export async function getTrendingMovies(page = 1, genreId?: number): Promise<{ r
   }
 }
 
-export async function getPopularMovies(page = 1): Promise<{ results: MovieItem[]; totalPages: number }> {
+export async function getPopularMovies(
+  page = 1,
+): Promise<{ results: MovieItem[]; totalPages: number }> {
   try {
     const data = await fetchWithCache<{ results: any[]; total_pages: number }>(
       "/movie/popular",
-      { page }
+      { page },
     );
 
     return {
@@ -185,16 +198,18 @@ export async function getPopularMovies(page = 1): Promise<{ results: MovieItem[]
   }
 }
 
-export async function getRecentlyAddedMovies(page = 1): Promise<{ results: MovieItem[]; totalPages: number }> {
+export async function getRecentlyAddedMovies(
+  page = 1,
+): Promise<{ results: MovieItem[]; totalPages: number }> {
   try {
-    // Sort discover endpoint by release date to get recently added/released movies
+    // sorting discover endpoint by release date to get recently added/released movies
     const data = await fetchWithCache<{ results: any[]; total_pages: number }>(
       "/discover/movie",
       {
         page,
         sort_by: "primary_release_date.desc",
         "primary_release_date.lte": new Date().toISOString().split("T")[0],
-      }
+      },
     );
 
     return {
@@ -207,11 +222,13 @@ export async function getRecentlyAddedMovies(page = 1): Promise<{ results: Movie
   }
 }
 
-export async function getTopRatedMovies(page = 1): Promise<{ results: MovieItem[]; totalPages: number }> {
+export async function getTopRatedMovies(
+  page = 1,
+): Promise<{ results: MovieItem[]; totalPages: number }> {
   try {
     const data = await fetchWithCache<{ results: any[]; total_pages: number }>(
       "/movie/top_rated",
-      { page }
+      { page },
     );
 
     return {
@@ -224,14 +241,17 @@ export async function getTopRatedMovies(page = 1): Promise<{ results: MovieItem[
   }
 }
 
-export async function searchMovies(query: string, page = 1): Promise<{ results: MovieItem[]; totalPages: number }> {
+export async function searchMovies(
+  query: string,
+  page = 1,
+): Promise<{ results: MovieItem[]; totalPages: number }> {
   if (!query.trim()) {
     return { results: [], totalPages: 1 };
   }
   try {
     const data = await fetchWithCache<{ results: any[]; total_pages: number }>(
       "/search/movie",
-      { query, page }
+      { query, page },
     );
 
     return {
@@ -244,11 +264,18 @@ export async function searchMovies(query: string, page = 1): Promise<{ results: 
   }
 }
 
-export async function getMovieDetails(id: number): Promise<MovieItem & { genres: Genre[]; runtime: number; tagline: string; credits: any }> {
+export async function getMovieDetails(id: number): Promise<
+  MovieItem & {
+    genres: Genre[];
+    runtime: number;
+    tagline: string;
+    credits: any;
+  }
+> {
   const data = await fetchWithCache<any>(
     `/movie/${id}`,
     { append_to_response: "credits,videos" },
-    10 * 60 * 1000 // Cache details for 10 minutes
+    10 * 60 * 1000, // 10 minutes cache
   );
 
   const mapped = mapTmdbMovie(data);
@@ -262,7 +289,9 @@ export async function getMovieDetails(id: number): Promise<MovieItem & { genres:
         id: c.id,
         name: c.name,
         character: c.character,
-        profilePath: c.profile_path ? `https://image.tmdb.org/t/p/w185${c.profile_path}` : null,
+        profilePath: c.profile_path
+          ? `https://image.tmdb.org/t/p/w185${c.profile_path}`
+          : null,
       })),
       crew: (data.credits?.crew || []).slice(0, 10).map((c: any) => ({
         id: c.id,
@@ -273,11 +302,14 @@ export async function getMovieDetails(id: number): Promise<MovieItem & { genres:
   };
 }
 
-export async function getRecommendationsForMovie(movieId: number, page = 1): Promise<{ results: MovieItem[]; totalPages: number }> {
+export async function getRecommendationsForMovie(
+  movieId: number,
+  page = 1,
+): Promise<{ results: MovieItem[]; totalPages: number }> {
   try {
     const data = await fetchWithCache<{ results: any[]; total_pages: number }>(
       `/movie/${movieId}/recommendations`,
-      { page }
+      { page },
     );
 
     return {

@@ -2,12 +2,15 @@ import { db } from "@/database/client";
 import * as schema from "@/database/schema";
 import { getPersonalizedRecommendations } from "@/lib/recommendations";
 import * as tmdb from "@/lib/tmdb";
-import { baseProcedure, createTRPCRouter, protectedProcedure } from "@/trpc/init";
+import {
+  baseProcedure,
+  createTRPCRouter,
+  protectedProcedure,
+} from "@/trpc/init";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
-export const exampleRouter = createTRPCRouter({
-  // Public procedures
+export const moviesRouter = createTRPCRouter({
   getGenres: baseProcedure.query(async () => {
     return await tmdb.getMovieGenres();
   }),
@@ -17,7 +20,7 @@ export const exampleRouter = createTRPCRouter({
       z.object({
         page: z.number().default(1),
         genreId: z.number().optional(),
-      })
+      }),
     )
     .query(async ({ input }) => {
       return await tmdb.getTrendingMovies(input.page, input.genreId);
@@ -27,7 +30,7 @@ export const exampleRouter = createTRPCRouter({
     .input(
       z.object({
         page: z.number().default(1),
-      })
+      }),
     )
     .query(async ({ input }) => {
       return await tmdb.getPopularMovies(input.page);
@@ -37,7 +40,7 @@ export const exampleRouter = createTRPCRouter({
     .input(
       z.object({
         page: z.number().default(1),
-      })
+      }),
     )
     .query(async ({ input }) => {
       return await tmdb.getRecentlyAddedMovies(input.page);
@@ -47,7 +50,7 @@ export const exampleRouter = createTRPCRouter({
     .input(
       z.object({
         page: z.number().default(1),
-      })
+      }),
     )
     .query(async ({ input }) => {
       return await tmdb.getTopRatedMovies(input.page);
@@ -58,7 +61,7 @@ export const exampleRouter = createTRPCRouter({
       z.object({
         query: z.string(),
         page: z.number().default(1),
-      })
+      }),
     )
     .query(async ({ input }) => {
       return await tmdb.searchMovies(input.query, input.page);
@@ -68,7 +71,7 @@ export const exampleRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.number(),
-      })
+      }),
     )
     .query(async ({ input }) => {
       return await tmdb.getMovieDetails(input.id);
@@ -79,24 +82,26 @@ export const exampleRouter = createTRPCRouter({
       z.object({
         movieId: z.number(),
         page: z.number().default(1),
-      })
+      }),
     )
     .query(async ({ input }) => {
       return await tmdb.getRecommendationsForMovie(input.movieId, input.page);
     }),
 
   getPersonalizedRecommendations: baseProcedure.query(async ({ ctx }) => {
-    // If user is logged in, use their ID for personalized algorithm.
-    // If not, it will gracefully fallback to standard popular.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const session = ctx && "auth" in ctx && ctx.auth ? (ctx.auth as any) : null;
     const userId = session?.user?.id || null;
     return await getPersonalizedRecommendations(userId);
   }),
 
-  // Protected procedures (require active session)
   getWatchlist: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.auth.user.id;
-    return await db.select().from(schema.watchlist).where(eq(schema.watchlist.userId, userId));
+
+    return await db
+      .select()
+      .from(schema.watchlist)
+      .where(eq(schema.watchlist.userId, userId));
   }),
 
   toggleWatchlist: protectedProcedure
@@ -107,7 +112,7 @@ export const exampleRouter = createTRPCRouter({
         posterPath: z.string().nullable(),
         releaseDate: z.string().nullable(),
         voteAverage: z.number().nullable(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.auth.user.id;
@@ -118,8 +123,8 @@ export const exampleRouter = createTRPCRouter({
         .where(
           and(
             eq(schema.watchlist.userId, userId),
-            eq(schema.watchlist.movieId, input.movieId)
-          )
+            eq(schema.watchlist.movieId, input.movieId),
+          ),
         );
 
       if (existing.length > 0) {
@@ -128,8 +133,8 @@ export const exampleRouter = createTRPCRouter({
           .where(
             and(
               eq(schema.watchlist.userId, userId),
-              eq(schema.watchlist.movieId, input.movieId)
-            )
+              eq(schema.watchlist.movieId, input.movieId),
+            ),
           );
         return { added: false };
       } else {
@@ -149,7 +154,10 @@ export const exampleRouter = createTRPCRouter({
 
   getRatings: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.auth.user.id;
-    return await db.select().from(schema.ratings).where(eq(schema.ratings.userId, userId));
+    return await db
+      .select()
+      .from(schema.ratings)
+      .where(eq(schema.ratings.userId, userId));
   }),
 
   getUserRatingForMovie: protectedProcedure
@@ -162,8 +170,8 @@ export const exampleRouter = createTRPCRouter({
         .where(
           and(
             eq(schema.ratings.userId, userId),
-            eq(schema.ratings.movieId, input.movieId)
-          )
+            eq(schema.ratings.movieId, input.movieId),
+          ),
         );
       return res[0] || null;
     }),
@@ -175,7 +183,7 @@ export const exampleRouter = createTRPCRouter({
         rating: z.number().min(1).max(5),
         title: z.string(),
         posterPath: z.string().nullable(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.auth.user.id;
@@ -186,8 +194,8 @@ export const exampleRouter = createTRPCRouter({
         .where(
           and(
             eq(schema.ratings.userId, userId),
-            eq(schema.ratings.movieId, input.movieId)
-          )
+            eq(schema.ratings.movieId, input.movieId),
+          ),
         );
 
       if (existing.length > 0) {
@@ -200,8 +208,8 @@ export const exampleRouter = createTRPCRouter({
           .where(
             and(
               eq(schema.ratings.userId, userId),
-              eq(schema.ratings.movieId, input.movieId)
-            )
+              eq(schema.ratings.movieId, input.movieId),
+            ),
           );
         return { updated: true };
       } else {
@@ -231,7 +239,7 @@ export const exampleRouter = createTRPCRouter({
     .input(
       z.object({
         favoriteGenres: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.auth.user.id;

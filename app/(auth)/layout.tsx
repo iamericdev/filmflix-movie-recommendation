@@ -13,10 +13,10 @@ const AuthLayout = ({ children }: PropsWithChildren) => {
       <div className="flex w-full max-w-sm flex-col gap-6">
         <Link
           href="/"
-          className="flex items-center gap-2 self-center font-medium"
+          className="flex items-center gap-2 self-center font-display tracking-[0.3em] text-base sm:text-lg"
         >
-          <RiMovie2Line className="text-xl" />
-          Movie Base
+          <RiMovie2Line className="text-2xl" />
+          FilmFlix
         </Link>
         {children}
       </div>

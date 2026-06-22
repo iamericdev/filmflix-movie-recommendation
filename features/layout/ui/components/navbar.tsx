@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth/client";
+import { Menu } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -23,31 +24,24 @@ export const Navbar = () => {
 
   return (
     <header className="absolute top-0 inset-x-0 z-30 pt-6 px-4 md:px-10">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-end md:justify-between">
         <nav className="hidden sm:flex items-center gap-7 text-sm text-white/80">
           <Link href="/" className="hover:text-white transition-colors">
             Home
           </Link>
           {session && (
-            <Link href="/watchlist" className="hover:text-white transition-colors">
+            <Link
+              href="/watchlist"
+              className="hover:text-white transition-colors"
+            >
               My Watchlist
             </Link>
           )}
-          {["Movies", "Series"].map((n) => (
-            <motion.a
-              key={n}
-              whileHover={{ y: -2, color: "#fff" }}
-              className="relative cursor-pointer"
-              href="#"
-            >
-              {n}
-            </motion.a>
-          ))}
         </nav>
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute left-1/2 -translate-x-1/2 font-display tracking-[0.3em] text-base sm:text-lg cursor-pointer"
+          className="absolute left-4 md:left-1/2 md:-translate-x-1/2 font-display tracking-[0.3em] text-base sm:text-lg cursor-pointer"
         >
           <Link href="/" className="hover:text-white">
             FILMFLIX
@@ -70,6 +64,8 @@ export const Navbar = () => {
               <Link href={"/login"}>Sign In</Link>
             </Button>
           )}
+
+          <Menu className="md:hidden" />
         </div>
       </div>
     </header>

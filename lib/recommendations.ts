@@ -12,27 +12,35 @@ import {
 /**
  * Generates personalized recommendations for a user.
  */
-export async function getPersonalizedRecommendations(userId: string | null): Promise<MovieItem[]> {
-  // 1. Cold start / Unauthenticated user fallback
+export async function getPersonalizedRecommendations(
+  userId: string | null,
+): Promise<MovieItem[]> {
+  // Unauthenticated user fallback
   if (!userId) {
     const popular = await getPopularMovies(1);
     return popular.results.slice(0, 12);
   }
 
   try {
-    // 2. Fetch user data in parallel
+    // Getting user data
     const [userRatings, userWatchlist, userPrefs] = await Promise.all([
       db.select().from(schema.ratings).where(eq(schema.ratings.userId, userId)),
-      db.select().from(schema.watchlist).where(eq(schema.watchlist.userId, userId)),
-      db.select().from(schema.preferences).where(eq(schema.preferences.userId, userId)),
+      db
+        .select()
+        .from(schema.watchlist)
+        .where(eq(schema.watchlist.userId, userId)),
+      db
+        .select()
+        .from(schema.preferences)
+        .where(eq(schema.preferences.userId, userId)),
     ]);
 
-    // Track movies to exclude (already watchlisted or rated)
+    // Movies to exclude (already watchlisted or rated)
     const ratedMovieIds = new Set(userRatings.map((r) => r.movieId));
     const watchlistMovieIds = new Set(userWatchlist.map((w) => w.movieId));
     const excludedMovieIds = new Set([...ratedMovieIds, ...watchlistMovieIds]);
 
-    // Build genre preferences profile
+    // Genre preferences profile
     const genreWeights: Record<number, number> = {};
 
     // Base weights from explicitly selected genres in profile
@@ -41,7 +49,7 @@ export async function getPersonalizedRecommendations(userId: string | null): Pro
         .split(",")
         .map((id) => parseInt(id.trim()))
         .filter((id) => !isNaN(id));
-      
+
       explicitGenres.forEach((genreId) => {
         genreWeights[genreId] = (genreWeights[genreId] || 0) + 5; // Give high weight to explicit preferences
       });
@@ -59,7 +67,7 @@ export async function getPersonalizedRecommendations(userId: string | null): Pro
     // If the user has no history, fallback to trending boosted by preferred genres
     if (favoriteMovieIds.length === 0) {
       const trending = await getTrendingMovies(1);
-      
+
       // Score trending based on preferred genres
       const scoredTrending = trending.results
         .filter((m) => !excludedMovieIds.has(m.id))
@@ -81,19 +89,22 @@ export async function getPersonalizedRecommendations(userId: string | null): Pro
 
     // 3. Collaborative similarities: Get recommendations from TMDB for favorite movies
     const recommendationPromises = favoriteMovieIds.map((id) =>
-      getRecommendationsForMovie(id).then((res) => res.results).catch(() => [] as MovieItem[])
+      getRecommendationsForMovie(id)
+        .then((res) => res.results)
+        .catch(() => [] as MovieItem[]),
     );
     const recommendationResults = await Promise.all(recommendationPromises);
 
     // Build map of candidate movies and counts of how often they were suggested
-    const candidateCounts: Record<number, { movie: MovieItem; count: number }> = {};
+    const candidateCounts: Record<number, { movie: MovieItem; count: number }> =
+      {};
 
     // Retrieve genres for favorite movies to update genreWeights profile
     const detailsPromises = favoriteMovieIds.map((id) =>
-      getMovieDetails(id).catch(() => null)
+      getMovieDetails(id).catch(() => null),
     );
     const detailsResults = await Promise.all(detailsPromises);
-    
+
     detailsResults.forEach((details) => {
       if (details) {
         details.genreIds.forEach((gid) => {
@@ -115,22 +126,24 @@ export async function getPersonalizedRecommendations(userId: string | null): Pro
     });
 
     // 4. Score candidates
-    const scoredCandidates = Object.values(candidateCounts).map(({ movie, count }) => {
-      // Base score is based on similarity count (co-occurrence)
-      let score = count * 4.0;
+    const scoredCandidates = Object.values(candidateCounts).map(
+      ({ movie, count }) => {
+        // Base score is based on similarity count (co-occurrence)
+        let score = count * 4.0;
 
-      // Add vote average rating score
-      score += movie.r || 0;
+        // Add vote average rating score
+        score += movie.r || 0;
 
-      // Add genre profile match bonus
-      movie.genreIds.forEach((gid) => {
-        if (genreWeights[gid]) {
-          score += genreWeights[gid] * 1.5;
-        }
-      });
+        // Add genre profile match bonus
+        movie.genreIds.forEach((gid) => {
+          if (genreWeights[gid]) {
+            score += genreWeights[gid] * 1.5;
+          }
+        });
 
-      return { movie, score };
-    });
+        return { movie, score };
+      },
+    );
 
     // Sort by score descending and return top 12
     const finalRecommendations = scoredCandidates
@@ -143,7 +156,9 @@ export async function getPersonalizedRecommendations(userId: string | null): Pro
 
     // Fallback if candidates list is too small
     const popular = await getPopularMovies(1);
-    return popular.results.filter((m) => !excludedMovieIds.has(m.id)).slice(0, 12);
+    return popular.results
+      .filter((m) => !excludedMovieIds.has(m.id))
+      .slice(0, 12);
   } catch (error) {
     console.error("Error generating recommendations:", error);
     const popular = await getPopularMovies(1);

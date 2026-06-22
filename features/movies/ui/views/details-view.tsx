@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth/client";
 import { useTRPC } from "@/trpc/client";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Clock, Heart, Star } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
@@ -18,46 +19,57 @@ export const DetailsView = () => {
 
   const id = parseInt(params.id as string, 10);
 
-  // Fetch movie details
-  const { data: movie, isLoading, error } = trpc.example.getMovieDetails.useQuery({ id }, {
-    enabled: !isNaN(id),
-  });
-
-  // Fetch user rating if authenticated
-  const { data: userRating, refetch: refetchRating } = trpc.example.getUserRatingForMovie.useQuery(
-    { movieId: id },
-    { enabled: !!session && !isNaN(id) }
+  const {
+    data: movie,
+    isLoading,
+    error,
+  } = useQuery(
+    trpc.movies.getMovieDetails.queryOptions(
+      { id },
+      {
+        enabled: !isNaN(id),
+      },
+    ),
   );
 
-  // Fetch watchlist to check if watchlisted
-  const { data: watchlist, refetch: refetchWatchlist } = trpc.example.getWatchlist.useQuery(
-    undefined,
-    { enabled: !!session }
+  const { data: userRating, refetch: refetchRating } = useQuery(
+    trpc.movies.getUserRatingForMovie.queryOptions(
+      { movieId: id },
+      { enabled: !!session && !isNaN(id) },
+    ),
   );
 
-  // Check if movie is currently in watchlist
-  const isWatchlisted = watchlist?.some((w) => w.movieId === id) ?? false;
+  const { data: watchlist, refetch: refetchWatchlist } = useQuery(
+    trpc.movies.getWatchlist.queryOptions(undefined, { enabled: !!session }),
+  );
+  const isWatchlisted =
+    watchlist?.some((w: { movieId: number }) => w.movieId === id) ?? false;
 
-  // Mutations
-  const toggleWatchlist = trpc.example.toggleWatchlist.useMutation({
-    onSuccess: (data) => {
-      refetchWatchlist();
-      toast.success(data.added ? "Added to watchlist" : "Removed from watchlist");
-    },
-    onError: () => {
-      toast.error("Failed to update watchlist");
-    },
-  });
+  const toggleWatchlist = useMutation(
+    trpc.movies.toggleWatchlist.mutationOptions({
+      onSuccess: (data: { added: boolean }) => {
+        refetchWatchlist();
+        toast.success(
+          data.added ? "Added to watchlist" : "Removed from watchlist",
+        );
+      },
+      onError: () => {
+        toast.error("Failed to update watchlist");
+      },
+    }),
+  );
 
-  const rateMovie = trpc.example.rateMovie.useMutation({
-    onSuccess: () => {
-      refetchRating();
-      toast.success("Rating saved successfully!");
-    },
-    onError: () => {
-      toast.error("Failed to save rating");
-    },
-  });
+  const rateMovie = useMutation(
+    trpc.movies.rateMovie.mutationOptions({
+      onSuccess: () => {
+        refetchRating();
+        toast.success("Rating saved successfully!");
+      },
+      onError: () => {
+        toast.error("Failed to save rating");
+      },
+    }),
+  );
 
   const [hoverRating, setHoverRating] = useState<number | null>(null);
 
@@ -69,7 +81,9 @@ export const DetailsView = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-center px-4">
         <h2 className="text-2xl font-bold mb-4">Movie Not Found</h2>
-        <p className="text-white/60 mb-6">There was an error loading the movie details.</p>
+        <p className="text-white/60 mb-6">
+          There was an error loading the movie details.
+        </p>
         <Button asChild>
           <Link href="/">Go Back Home</Link>
         </Button>
@@ -108,7 +122,6 @@ export const DetailsView = () => {
 
   return (
     <div className="relative min-h-screen bg-background text-foreground pb-20">
-      {/* Back Button */}
       <div className="absolute top-24 left-4 md:left-12 z-40">
         <button
           onClick={() => router.back()}
@@ -118,7 +131,6 @@ export const DetailsView = () => {
         </button>
       </div>
 
-      {/* Hero Backdrop Section */}
       <div className="relative h-[400px] md:h-[550px] w-full overflow-hidden">
         <motion.img
           initial={{ scale: 1.05, opacity: 0 }}
@@ -128,14 +140,12 @@ export const DetailsView = () => {
           alt={movie.t}
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-background via-background/40 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-r from-background via-transparent to-transparent" />
       </div>
 
-      {/* Main Details Grid */}
       <div className="max-w-7xl mx-auto px-4 md:px-12 -mt-36 md:-mt-52 relative z-30">
         <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-8 md:gap-12">
-          {/* Movie Poster & Actions */}
           <div className="flex flex-col gap-4">
             <motion.div
               initial={{ y: 30, opacity: 0 }}
@@ -144,7 +154,11 @@ export const DetailsView = () => {
               className="aspect-2/3 rounded-2xl overflow-hidden shadow-2xl border border-white/10"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={movie.img} alt={movie.t} className="w-full h-full object-cover" />
+              <img
+                src={movie.img}
+                alt={movie.t}
+                className="w-full h-full object-cover"
+              />
             </motion.div>
 
             {/* Watchlist Toggle */}
@@ -157,7 +171,9 @@ export const DetailsView = () => {
                   : "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-white/20"
               }`}
             >
-              <Heart className={`w-4 h-4 ${isWatchlisted ? "fill-accent-red" : ""}`} />
+              <Heart
+                className={`w-4 h-4 ${isWatchlisted ? "fill-red-500" : ""}`}
+              />
               {isWatchlisted ? "In Watchlist" : "Add to Watchlist"}
             </motion.button>
 
@@ -196,9 +212,13 @@ export const DetailsView = () => {
               transition={{ delay: 0.3 }}
               className="space-y-4"
             >
-              <h1 className="text-3xl md:text-5xl font-display tracking-wide">{movie.t}</h1>
+              <h1 className="text-3xl md:text-5xl font-display tracking-wide">
+                {movie.t}
+              </h1>
               {movie.tagline && (
-                <p className="text-lg text-primary italic font-light">"{movie.tagline}"</p>
+                <p className="text-lg text-primary italic font-light">
+                  &quot;{movie.tagline}&quot;
+                </p>
               )}
 
               {/* Badges / Metrics */}
@@ -221,7 +241,7 @@ export const DetailsView = () => {
 
               {/* Genres */}
               <div className="flex flex-wrap gap-2 pt-2">
-                {movie.genres.map((g) => (
+                {movie.genres.map((g: { id: number; name: string }) => (
                   <span
                     key={g.id}
                     className="px-3.5 py-1 rounded-full text-xs bg-primary/10 border border-primary/20 text-white/90"
@@ -246,8 +266,12 @@ export const DetailsView = () => {
                 <div className="pt-6">
                   <h3 className="text-lg font-semibold mb-4">Top Cast</h3>
                   <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {movie.credits.cast.map((actor: any) => (
-                      <div key={actor.id} className="flex flex-col items-center text-center shrink-0 w-20">
+                      <div
+                        key={actor.id}
+                        className="flex flex-col items-center text-center shrink-0 w-20"
+                      >
                         <div className="w-16 h-16 rounded-full overflow-hidden bg-white/5 border border-white/10 mb-2">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
@@ -256,8 +280,12 @@ export const DetailsView = () => {
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <span className="text-[11px] font-semibold truncate w-full">{actor.name}</span>
-                        <span className="text-[9px] text-white/50 truncate w-full">{actor.character}</span>
+                        <span className="text-[11px] font-semibold truncate w-full">
+                          {actor.name}
+                        </span>
+                        <span className="text-[9px] text-white/50 truncate w-full">
+                          {actor.character}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -274,10 +302,11 @@ export const DetailsView = () => {
   );
 };
 
-// Sub-component for Similar Recommendations to enable modular rendering
 const SimilarRecommendations = ({ movieId }: { movieId: number }) => {
   const trpc = useTRPC();
-  const { data: recs, isLoading } = trpc.example.getMovieRecommendations.useQuery({ movieId });
+  const { data: recs, isLoading } = useQuery(
+    trpc.movies.getMovieRecommendations.queryOptions({ movieId }),
+  );
 
   if (isLoading) {
     return (
@@ -305,7 +334,11 @@ const SimilarRecommendations = ({ movieId }: { movieId: number }) => {
           <Link key={m.id} href={`/movie/${m.id}`} className="group block">
             <div className="aspect-2/3 rounded-lg overflow-hidden border border-white/5 shadow-md transition-all group-hover:scale-[1.03] group-hover:-translate-y-1">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={m.img} alt={m.t} className="w-full h-full object-cover" />
+              <img
+                src={m.img}
+                alt={m.t}
+                className="w-full h-full object-cover"
+              />
             </div>
             <p className="text-sm mt-2 truncate font-medium group-hover:text-primary transition-colors">
               {m.t}
@@ -317,7 +350,6 @@ const SimilarRecommendations = ({ movieId }: { movieId: number }) => {
   );
 };
 
-// Skeleton Screen for Details Loading
 const DetailsSkeleton = () => (
   <div className="relative min-h-screen bg-background pb-20 animate-pulse">
     <div className="h-[300px] md:h-[450px] w-full bg-white/5" />

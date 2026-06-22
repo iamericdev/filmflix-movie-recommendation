@@ -1,7 +1,7 @@
-import { exampleRouter } from "@/features/movies/server/procedures";
+import { moviesRouter } from "@/features/movies/server/procedures";
 import { createTRPCRouter } from "../init";
 export const appRouter = createTRPCRouter({
-  example: exampleRouter,
+  movies: moviesRouter,
 });
 // export type definition of API
 export type AppRouter = typeof appRouter;
