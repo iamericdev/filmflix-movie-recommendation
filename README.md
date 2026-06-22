@@ -1,36 +1,181 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div align="center">
+  <br />
+  <h1>🎬 FilmFlix — Movie Recommendation App</h1>
+  <p>
+    <strong>A modern movie discovery platform built with Next.js, tRPC, and TMDB.</strong>
+  </p>
+  <p>
+    <img src="https://img.shields.io/badge/Next.js-16.2.9-000000?style=flat-square&logo=next.js" alt="Next.js" />
+    <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript" alt="TypeScript" />
+    <img src="https://img.shields.io/badge/tRPC-11-2596BE?style=flat-square&logo=trpc" alt="tRPC" />
+    <img src="https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?style=flat-square&logo=tailwindcss" alt="Tailwind CSS" />
+    <img src="https://img.shields.io/badge/Drizzle%20ORM-0.45-C5F74F?style=flat-square&logo=drizzle" alt="Drizzle ORM" />
+    <img src="https://img.shields.io/badge/Bun-latest-FBF0DF?style=flat-square&logo=bun" alt="Bun" />
+    <img src="https://img.shields.io/badge/TMDB-API-01D277?style=flat-square&logo=themoviedatabase" alt="TMDB" />
+  </p>
+  <br />
+  <img src="./public/images/hero-starwars.jpg" alt="FilmFlix Banner" width="100%" style="border-radius: 12px;" />
+  <br />
+</div>
+
+---
+
+## Features
+
+| Feature                          | Description                                                                |
+| -------------------------------- | -------------------------------------------------------------------------- |
+| **Authentication**               | Email/password & Google OAuth via Better Auth                              |
+| **Personalized Recommendations** | AI-driven engine that analyzes your ratings, watchlist & genre preferences |
+| **Debounced Search**             | Search movies by title or keyword with smart debouncing (400ms)            |
+| **4 Browsing Tabs**              | Trending (filterable by genre), Popular, Recent, and Top-Rated             |
+| **Movie Details**                | Full cast & crew, ratings, runtime, genre badges, trailers & more          |
+| **Rate Movies**                  | 1–5 star rating with hover preview and persistent storage                  |
+| **Watchlist**                    | Save movies to your personal watchlist with one click                      |
+| **Poster Carousel**              | Horizontal carousel for popular movies                                     |
+| **Type-Safe API**                | End-to-end type safety with tRPC + TanStack React Query                    |
+| **PostgreSQL**                   | Persistent storage via Drizzle ORM + Neon Serverless                       |
+| **Dark/Light Mode**              | Theme-aware UI with next-themes                                            |
+| **Responsive Design**            | Fully responsive across mobile, tablet & desktop                           |
+| **Tested**                       | Unit tests with Vitest + Testing Library                                   |
+| **CI/CD**                        | Automated linting, testing, and PR creation via GitHub Actions             |
+
+---
+
+## Tech Stack
+
+| Category        | Technologies                                       |
+| --------------- | -------------------------------------------------- |
+| **Framework**   | Next.js 16 (App Router), React 19, TypeScript 5    |
+| **API Layer**   | tRPC 11, TanStack React Query 5, Superjson         |
+| **Database**    | PostgreSQL (Neon), Drizzle ORM 0.45                |
+| **Auth**        | Better Auth (email/password + Google OAuth)        |
+| **Styling**     | Tailwind CSS 4, shadcn/ui, Radix UI, Framer Motion |
+| **Testing**     | Vitest, Testing Library, jsdom                     |
+| **CI/CD**       | GitHub Actions (lint, type-check, test, auto PR)   |
+| **Data Source** | [TMDB API](https://www.themoviedb.org/)            |
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- [Bun](https://bun.sh/) (recommended) or Node.js 20+
+- A [TMDB API key](https://www.themoviedb.org/settings/api) (free)
+- A [Neon PostgreSQL](https://neon.tech/) database (free tier)
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Clone the repository
+git clone https://github.com/iamericdev/filmflix-movie-recommendation.git
+cd filmflix-movie-recommendation
+
+# Install dependencies
+bun install
+
+# Copy environment variables
+cp .env.example .env
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Fill in your `.env` file:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```env
+DATABASE_URL="postgresql://..."
+TMDB_API_KEY="your_tmdb_api_key_here"
+BETTER_AUTH_SECRET="your_auth_secret"
+NEXT_PUBLIC_BASE_URL="http://localhost:3000"
+BETTER_AUTH_URL="http://localhost:3000"
+GOOGLE_CLIENT_ID="your_google_client_id"
+GOOGLE_CLIENT_SECRET="your_google_client_secret"
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Run Database Migrations
 
-## Learn More
+```bash
+bun run db:push
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Start Development Server
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+bun run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Usage
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Browse Movies** — Explore the Trending, Popular, Recent, and Top-Rated tabs on the home page.
+2. **Filter by Genre** — On the Trending tab, filter by genre categories like Action, Adventure, Sci-Fi, etc.
+3. **Search** — Use the search bar in the hero section to find any movie.
+4. **View Details** — Click any movie poster to see full details, cast, ratings, and recommendations.
+5. **Create an Account** — Sign up with email/password or Google to unlock personalized features.
+6. **Rate Movies** — Give movies a 1–5 star rating (requires login).
+7. **Build Your Watchlist** — ❤️ Save movies to your watchlist for later.
+8. **Get Recommendations** — The app suggests movies tailored to your taste based on your ratings and watchlist.
+
+---
+
+## Running Tests
+
+```bash
+bun run test       # Run all tests
+bun run test:watch # Watch mode
+```
+
+---
+
+## 📦 Scripts
+
+| Script                | Description                     |
+| --------------------- | ------------------------------- |
+| `bun run dev`         | Start development server        |
+| `bun run build`       | Production build                |
+| `bun run start`       | Start production server         |
+| `bun run lint`        | Run ESLint                      |
+| `bun run typecheck`   | Run TypeScript type checking    |
+| `bun run test`        | Run Vitest tests                |
+| `bun run db:push`     | Push Drizzle schema to database |
+| `bun run db:generate` | Generate Drizzle migrations     |
+| `bun run db:studio`   | Open Drizzle Studio             |
+
+---
+
+## Project Structure
+
+```
+app/                  # Next.js App Router pages & layouts
+├── (auth)/           # Login & Signup pages
+├── (main)/           # Home, Movie Details & Watchlist pages
+├── api/              # API routes (auth, tRPC)
+├── globals.css       # Global styles
+└── layout.tsx        # Root layout
+
+features/             # Domain logic (feature-based)
+├── auth/             # Auth forms & utilities
+├── layout/           # Navbar, Footer
+└── movies/           # Movie components, views, tRPC procedures
+
+components/ui/        # shadcn/ui components
+lib/                  # TMDB client, recommendation engine, utilities
+database/             # Drizzle schema & client
+trpc/                 # tRPC configuration & router
+public/images/        # Static assets
+```
+
+---
+
+## 🤝 Contact
+
+**Eric Ricky**
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/eric-ricky-7532b01b9/)
+
+---
+
+<div align="center">
+  <sub>Built with ❤️ by Eric Ricky 🇰🇪</sub>
+</div>

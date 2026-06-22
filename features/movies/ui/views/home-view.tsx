@@ -4,11 +4,10 @@ import { authClient } from "@/lib/auth/client";
 import { MovieItem } from "@/lib/tmdb";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { cats, tabIcons, tabs } from "../../server/data";
-import { FeatureBanner } from "../components/feature-banner";
 import { HeroSection } from "../components/hero";
 import { Row } from "../components/row-component";
 
@@ -131,9 +130,30 @@ export const HomeView = () => {
     setMoviesList([]);
   };
 
-  const handleShowMore = () => {
-    setPage((p) => p + 1);
-  };
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const handleLoadMore = useCallback(() => {
+    if (!isLoading && activeRes && page < activeRes.totalPages) {
+      setPage((p) => p + 1);
+    }
+  }, [isLoading, activeRes, page]);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          handleLoadMore();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [handleLoadMore]);
 
   return (
     <div className="pb-10">
@@ -251,28 +271,13 @@ export const HomeView = () => {
         </>
       )}
 
-      <FeatureBanner />
+      {/* Infinite scroll sentinel */}
+      <div ref={sentinelRef} className="h-1" aria-hidden="true" />
 
-      {activeRes && page < activeRes.totalPages && (
-        <div className="px-4 md:px-12 pt-10">
-          <motion.button
-            whileHover={{
-              scale: 1.01,
-              backgroundColor: "rgba(255,255,255,0.08)",
-            }}
-            whileTap={{ scale: 0.99 }}
-            onClick={handleShowMore}
-            disabled={isLoading}
-            className="w-full py-3 rounded-lg border border-white/10 text-sm flex items-center justify-center gap-2 text-white/70 hover:text-white cursor-pointer hover:border-white/20 transition-all disabled:opacity-50"
-          >
-            {isLoading ? (
-              <div className="w-4 h-4 rounded-full border border-white/20 border-t-white animate-spin" />
-            ) : (
-              <>
-                <Plus className="w-4 h-4" /> Show More
-              </>
-            )}
-          </motion.button>
+      {/* Loading spinner shown while fetching more pages */}
+      {isLoading && page > 1 && (
+        <div className="flex justify-center py-8">
+          <div className="w-6 h-6 rounded-full border-2 border-white/20 border-t-white animate-spin" />
         </div>
       )}
     </div>
