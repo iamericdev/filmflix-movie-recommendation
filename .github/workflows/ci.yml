@@ -97,6 +97,13 @@ jobs:
             exit 0
           fi
 
+          # Ensure the label exists (no-op if it already does)
+          gh label create "automated-pr" \
+            --repo "$REPO" \
+            --description "Opened automatically by CI" \
+            --color "0075ca" \
+            || true
+
           echo "Creating PR..."
           gh pr create \
             --repo "$REPO" \
