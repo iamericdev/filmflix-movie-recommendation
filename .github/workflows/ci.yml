@@ -8,8 +8,6 @@ on:
     branches:
       - main
 
-# Cancel in-progress runs for the same branch/PR so we never queue up stale
-# jobs after a rapid series of pushes.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -51,7 +49,6 @@ jobs:
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || 'ci_dummy_secret' }}
         run: bun run test
 
-  # Auto PR: open development → main after quality gate passes
   open-pr:
     name: Open Pull Request → main
     runs-on: ubuntu-latest
@@ -65,14 +62,44 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # Fetch full history so we can diff development vs main
+          fetch-depth: 0
 
       - name: Open or update PR via GitHub CLI
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
         run: |
-          # gh pr create exits with code 1 if a PR already exists for this branch.
-          # We use || true so the step doesn't fail when a PR is already open.
+          # Fetch main so git can compare branches locally
+          git fetch origin main
+
+          # Check whether development has any commits that main doesn't
+          DIFF_COUNT=$(git rev-list --count origin/main..HEAD)
+          echo "Commits ahead of main: $DIFF_COUNT"
+
+          if [ "$DIFF_COUNT" -eq 0 ]; then
+            echo "development is not ahead of main — nothing to PR."
+            exit 0
+          fi
+
+          # Check if an open PR already exists for this head→base
+          EXISTING_PR=$(gh pr list \
+            --repo "$REPO" \
+            --head development \
+            --base main \
+            --state open \
+            --json number \
+            --jq '.[0].number')
+
+          if [ -n "$EXISTING_PR" ]; then
+            echo "PR #$EXISTING_PR already exists — skipping creation."
+            exit 0
+          fi
+
+          echo "Creating PR..."
           gh pr create \
+            --repo "$REPO" \
             --base main \
             --head development \
             --title "chore: promote development → main" \
@@ -85,5 +112,4 @@ jobs:
           - [x] Type-check passed
           - [x] Unit tests passed
           - [ ] Manual review completed" \
-            --label automated-pr \
-            || echo "PR already exists or no diff — skipping creation."
+            --label automated-pr
