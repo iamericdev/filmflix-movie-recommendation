@@ -1,13 +1,8 @@
 import { db } from "@/database/client";
 import * as schema from "@/database/schema";
 import { eq } from "drizzle-orm";
-import {
-  getMovieDetails,
-  getPopularMovies,
-  getRecommendationsForMovie,
-  getTrendingMovies,
-  MovieItem,
-} from "./tmdb";
+import * as tmdb from "./tmdb";
+import { MovieItem } from "./tmdb";
 
 /**
  * Generates personalized recommendations for a user.
@@ -17,7 +12,7 @@ export async function getPersonalizedRecommendations(
 ): Promise<MovieItem[]> {
   // Unauthenticated user fallback
   if (!userId) {
-    const popular = await getPopularMovies(1);
+    const popular = await tmdb.getPopularMovies(1);
     return popular.results.slice(0, 12);
   }
 
@@ -66,7 +61,7 @@ export async function getPersonalizedRecommendations(
 
     // If the user has no history, fallback to trending boosted by preferred genres
     if (favoriteMovieIds.length === 0) {
-      const trending = await getTrendingMovies(1);
+      const trending = await tmdb.getTrendingMovies(1);
 
       // Score trending based on preferred genres
       const scoredTrending = trending.results
@@ -89,7 +84,7 @@ export async function getPersonalizedRecommendations(
 
     // 3. Collaborative similarities: Get recommendations from TMDB for favorite movies
     const recommendationPromises = favoriteMovieIds.map((id) =>
-      getRecommendationsForMovie(id)
+      tmdb.getRecommendationsForMovie(id)
         .then((res) => res.results)
         .catch(() => [] as MovieItem[]),
     );
@@ -101,7 +96,7 @@ export async function getPersonalizedRecommendations(
 
     // Retrieve genres for favorite movies to update genreWeights profile
     const detailsPromises = favoriteMovieIds.map((id) =>
-      getMovieDetails(id).catch(() => null),
+      tmdb.getMovieDetails(id).catch(() => null),
     );
     const detailsResults = await Promise.all(detailsPromises);
 
@@ -155,13 +150,13 @@ export async function getPersonalizedRecommendations(
     }
 
     // Fallback if candidates list is too small
-    const popular = await getPopularMovies(1);
+    const popular = await tmdb.getPopularMovies(1);
     return popular.results
       .filter((m) => !excludedMovieIds.has(m.id))
       .slice(0, 12);
   } catch (error) {
     console.error("Error generating recommendations:", error);
-    const popular = await getPopularMovies(1);
+    const popular = await tmdb.getPopularMovies(1);
     return popular.results.slice(0, 12);
   }
 }

@@ -1,0 +1,122 @@
+name: CI / CD Pipeline
+
+on:
+  push:
+    branches:
+      - development
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Type-check
+        run: bun run --bun tsc --noEmit
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Run tests
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY || 'ci_dummy_key' }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || 'ci_dummy_secret' }}
+        run: bun run test
+
+  open-pr:
+    name: Open Pull Request → main
+    runs-on: ubuntu-latest
+    needs: quality
+    if: github.event_name == 'push'
+
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history so we can diff development vs main
+          fetch-depth: 0
+
+      - name: Open or update PR via GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Fetch main so git can compare branches locally
+          git fetch origin main
+
+          # Check whether development has any commits that main doesn't
+          DIFF_COUNT=$(git rev-list --count origin/main..HEAD)
+          echo "Commits ahead of main: $DIFF_COUNT"
+
+          if [ "$DIFF_COUNT" -eq 0 ]; then
+            echo "development is not ahead of main — nothing to PR."
+            exit 0
+          fi
+
+          # Check if an open PR already exists for this head→base
+          EXISTING_PR=$(gh pr list \
+            --repo "$REPO" \
+            --head development \
+            --base main \
+            --state open \
+            --json number \
+            --jq '.[0].number')
+
+          if [ -n "$EXISTING_PR" ]; then
+            echo "PR #$EXISTING_PR already exists — skipping creation."
+            exit 0
+          fi
+
+          # Ensure the label exists (no-op if it already does)
+          gh label create "automated-pr" \
+            --repo "$REPO" \
+            --description "Opened automatically by CI" \
+            --color "0075ca" \
+            || true
+
+          echo "Creating PR..."
+          gh pr create \
+            --repo "$REPO" \
+            --base main \
+            --head development \
+            --title "chore: promote development → main" \
+            --body "## Automated Pull Request
+
+          Opened automatically after the CI quality gate passed on \`development\`.
+
+          ### Checklist
+          - [x] Lint passed
+          - [x] Type-check passed
+          - [x] Unit tests passed
+          - [ ] Manual review completed" \
+            --label automated-pr
