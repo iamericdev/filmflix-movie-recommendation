@@ -5,8 +5,8 @@ import Link from "next/link";
 export const Footer = () => {
   return (
     <footer className="bg-surface py-12">
-      <div className="max-w-[1400px] mx-auto flex items-center justify-between">
-        <div className="font-display tracking-[0.3em] text-xl mb-5">
+      <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row items-center justify-center md:justify-between px-4 gap-5">
+        <div className="font-display tracking-[0.3em] text-xl mb-5 md:mb-0">
           FILMFLIX
         </div>
 
